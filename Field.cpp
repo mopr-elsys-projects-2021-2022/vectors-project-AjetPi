@@ -38,50 +38,71 @@ void Field::hit(Point target, double power)
 	while(flag)
 	{
 		double ABSub = AB.substitute(trajectory);
-		ABSub += ((ABSub > 0) * ((ball.diameter / 2) * (AB.C / height))) - ((ABSub < 0) * ((ball.diameter / 2) * (AB.C / height)));
 		double BCSub = BC.substitute(trajectory);
-		BCSub += ((BCSub > 0) * ((ball.diameter / 2) * (AB.C / width))) - ((BCSub < 0) * ((ball.diameter / 2) * (AB.C / width)));
 		double CDSub = CD.substitute(trajectory);
-		CDSub += ((CDSub > 0) * ((ball.diameter / 2) * (AB.C / height))) - ((CDSub < 0) * ((ball.diameter / 2) * (AB.C / height)));
 		double DASub = DA.substitute(trajectory);
-		DASub += ((DASub > 0) * ((ball.diameter / 2) * (AB.C / width))) - ((DASub < 0) * ((ball.diameter / 2) * (AB.C / width)));
+		double x, y;
+		if(AB.C)
+		{
+			x = AB.C / width;
+			y = AB.C / height;
+		}
+		else
+		{
+			x = BC.C / width;
+			y = BC.C / height;
+		}
+		double radius = ball.diameter / 2;
+		ABSub += ((ABSub > 0) * (radius * y)) - ((ABSub < 0) * (radius * y));
+		BCSub += ((BCSub > 0) * (radius * x)) - ((BCSub < 0) * (radius * x));
+		CDSub += ((CDSub > 0) * (radius * y)) - ((CDSub < 0) * (radius * y));
+		DASub += ((DASub > 0) * (radius * x)) - ((DASub < 0) * (radius * x));
 		pair<double, double> xy;
 		
+		/*
 		cout << "AB " << ABSub << " BC " << BCSub << endl;
 		cout << "CD " << CDSub << " DA " << DASub << endl;
 		cout << "TR " << trajectory.x << " " << trajectory.y << endl << endl;
+		*/
 		
-		if(ABSub < 0)
+		double* min = &ABSub;
+		if(BCSub < *min) min = &BCSub;
+		if(CDSub < *min) min = &CDSub;
+		if(DASub < *min) min = &DASub;
+		if(*min < 0)
 		{
-			//cout << "The ball bounced into the wall AB." << endl;
-			xy = AB.solve(BC, -ABSub, BCSub);
-			cout << "XY " << xy.first << " " << xy.second << endl << endl;
-			trajectory = Vector(xy.first, xy.second);
-			continue;
-		}
-		if(BCSub < 0)
-		{
-			//cout << "The ball bounced into the wall BC." << endl;
-			xy = BC.solve(CD, -BCSub, CDSub);
-			cout << "XY " << xy.first << " " << xy.second << endl << endl;
-			trajectory = Vector(xy.first, xy.second);
-			continue;
-		}
-		if(CDSub < 0)
-		{
-			//cout << "The ball bounced into the wall CD." << endl;
-			xy = CD.solve(DA, -CDSub, DASub);
-			cout << "XY " << xy.first << " " << xy.second << endl << endl;
-			trajectory = Vector(xy.first, xy.second);
-			continue;
-		}
-		if(DASub < 0)
-		{
-			//cout << "The ball bounced into the wall DA." << endl;
-			xy = DA.solve(AB, -DASub, ABSub);
-			cout << "XY " << xy.first << " " << xy.second << endl << endl;
-			trajectory = Vector(xy.first, xy.second);
-			continue;
+			if(min == &ABSub)
+			{
+				//cout << "The ball bounced into the wall AB." << endl;
+				xy = AB.solve(BC, -ABSub, BCSub);
+				cout << "XY " << xy.first << " " << xy.second << endl << endl;
+				trajectory = Vector(xy.first, xy.second);
+				continue;
+			}
+			if(min == &BCSub)
+			{
+				//cout << "The ball bounced into the wall BC." << endl;
+				xy = BC.solve(CD, -BCSub, CDSub);
+				cout << "XY " << xy.first << " " << xy.second << endl << endl;
+				trajectory = Vector(xy.first, xy.second);
+				continue;
+			}
+			if(min == &CDSub)
+			{
+				//cout << "The ball bounced into the wall CD." << endl;
+				xy = CD.solve(DA, -CDSub, DASub);
+				cout << "XY " << xy.first << " " << xy.second << endl << endl;
+				trajectory = Vector(xy.first, xy.second);
+				continue;
+			}
+			if(min == &DASub)
+			{
+				//cout << "The ball bounced into the wall DA." << endl;
+				xy = DA.solve(AB, -DASub, ABSub);
+				cout << "XY " << xy.first << " " << xy.second << endl << endl;
+				trajectory = Vector(xy.first, xy.second);
+				continue;
+			}
 		}
 		
 		flag = 0;
