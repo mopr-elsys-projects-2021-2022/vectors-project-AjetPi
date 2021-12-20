@@ -1,39 +1,40 @@
 #include "Field.h"
 
-int main() {
+int main()
+{
 	Field field;
 	bool gameLoopRunning = true;
 	char command; // the value of command describes which option of the menu of the game is going to be used
-
-	while(gameLoopRunning) {
+	
+	while(gameLoopRunning)
+	{
 		cout << "Enter a command (c - change parameters, h - hit ball, f - show field specs or q - quit): ";
 		cin >> command;
-		switch (command) {
-        		// 'c' stands for "change" - it's for changing the parameters of the field or the ball
-			case 'c':
+		switch(command)
+		{
+			case 'c': // 'c' stands for "change" - it's for changing the parameters of the field or the ball
 				cout << "Enter a command (s - simple field, c - complex field or b - ball): ";
 				cin >> command;
-				switch (command) {
-	            			// 's' stands for "simple case" - the horizontal side of the field is parallel to the x-axis, while the other one - to the y-axis
-					case 's': 
+				switch(command)
+				{
+					case 's': // 's' stands for "simple case" - the horizontal side of the field is parallel to the x-axis, while the other one - to the y-axis
 						cout << endl;
 						simpleCase(field);
 						break; 
-		           		// 'c' stands for "complex case" - it is not nessecary for the sides of the field to be perpendicular to any axis
-					case 'c': 
+					case 'c': // 'c' stands for "complex case" - it is not nessecary for the sides of the field to be perpendicular to any axis
 						cout << endl;
 						complexCase(field);
 						break;
-					// 'b' stands for "ball case" - keeps the same field and only changes the ball position
-					case 'b':
+					case 'b': // 'b' stands for "ball case" - keeps the same field and only changes the ball position
 						cout << endl;
 						ballCase(field);
+						break;
 					default:
 						cout << "Invalid command. Try again." << endl;
 				}
 				break;
-        		// 'h' stands for "hit" - it's the option for defining in which direction and how strongly the ball is going to be hit
-			case 'h': {
+			case 'h': // 'h' stands for "hit" - it's the option for defining in which direction and how strongly the ball is going to be hit
+			{
 				cout << endl;
 				Point targetPoint;
 				double power;
@@ -44,13 +45,11 @@ int main() {
 				field.hit(targetPoint, power);
 				break;
 			}
-			// 'f' stands for "field" - it's used to show the specifications of the current field and ball
-			case 'f':
+			case 'f': // 'f' stands for "field" - it's used to show the specifications of the current field and ball
 				cout << endl;
 				cout << field;
 				break;
-	        	// 'q' stands for "quit" - it stops the game loop
-			case 'q':
+			case 'q': // 'q' stands for "quit" - it stops the game loop
 				gameLoopRunning = false;
 				break;
 			default:
