@@ -48,6 +48,10 @@ void Field::hit(Point target, double power)
 		{
 			if(!(TR.substitute(endPoints[i])))
 			{
+				if(signbit(trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x))
+				{
+					continue;
+				}
 				if(abs(trajectory.x - ball.center.x) >= abs(endPoints[i].x - ball.center.x))
 				{
 					ball.center = startingPoint;
