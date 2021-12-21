@@ -1,19 +1,14 @@
 #include "Line.h"
 
-double Line::substitute(const Vector& v)
+void Line::substitute(const Vector& v)
 {
-	return A * v.x + B * v.y + C;
+	sub = A * v.x + B * v.y + C;
 }
-pair<double, double> Line::solve(const Line& other, double e, double f)
+Vector Line::solve(const Line& other)
 {
-	e -= C;
-	f -= other.C;
 	double determinant = A * other.B - B * other.A;
-	pair<double, double> xy;
-	if(determinant)
-	{
-		xy.first = (e * other.B - B * f) / determinant;
-		xy.second = (A * f - e * other.A) / determinant;
-	}
-	return xy;
+	double x, y;
+	x = (((-C) * other.B) - (B * (-other.C))) / determinant;
+	y = ((A * (-other.C)) - ((-C) * other.A)) / determinant;
+	return Vector(x, y);
 }

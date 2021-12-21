@@ -3,7 +3,7 @@
 #include "Vector.h"
 #include <cmath>
 
-Field::Field(Point origin, double width, double height, Ball ball) : ball(ball), startingPoint(ball.center)
+Field::Field(Point origin, double width, double height, Ball ball) : ball(ball), startingPoint(ball.center), width(width), height(height)
 {
 	endPoints[0] = Point(origin.x, origin.y);
 	endPoints[1] = Point(origin.x + width, origin.y);
@@ -16,6 +16,8 @@ Field::Field(Point endPoints[4], Ball ball) : ball(ball), startingPoint(ball.cen
 	{
 		this->endPoints[i] = endPoints[i];
 	}
+	width = sqrt(pow(endPoints[1].x - endPoints[0].x, 2) + pow(endPoints[1].y - endPoints[0].y, 2));
+	height = sqrt(pow(endPoints[0].x - endPoints[3].x, 2) + pow(endPoints[0].y - endPoints[3].y, 2));
 }
 
 void Field::hit(Point target, double power)
@@ -26,81 +28,55 @@ void Field::hit(Point target, double power)
 		return;
 	}
 	
-	double width = sqrt(pow(endPoints[1].x - endPoints[0].x, 2) + pow(endPoints[1].y - endPoints[0].y, 2));
-	double height = sqrt(pow(endPoints[0].x - endPoints[3].x, 2) + pow(endPoints[0].y - endPoints[3].y, 2));
 	Line AB(endPoints[0], endPoints[1]);
 	Line BC(endPoints[1], endPoints[2]);
 	Line CD(endPoints[2], endPoints[3]);
 	Line DA(endPoints[3], endPoints[0]);
+	double radius = ball.diameter / 2;
+	double wratio = abs(DA.C - BC.C) / width;
+	double hratio = abs(CD.C - AB.C) / height;
+	DA.C -= radius * wratio; BC.C -= radius * wratio;
+	CD.C -= radius * hratio; AB.C -= radius * hratio;
 	Vector trajectory = Vector(ball.center.x, ball.center.y) + Vector(ball.center, target) * power;
 	
 	short unsigned int flag = 1;
 	while(flag)
 	{
-		double ABSub = AB.substitute(trajectory);
-		double BCSub = BC.substitute(trajectory);
-		double CDSub = CD.substitute(trajectory);
-		double DASub = DA.substitute(trajectory);
-		double x, y;
-		if(AB.C)
-		{
-			x = AB.C / width;
-			y = AB.C / height;
-		}
-		else
-		{
-			x = BC.C / width;
-			y = BC.C / height;
-		}
-		double radius = ball.diameter / 2;
-		ABSub += ((ABSub > 0) * (radius * y)) - ((ABSub < 0) * (radius * y));
-		BCSub += ((BCSub > 0) * (radius * x)) - ((BCSub < 0) * (radius * x));
-		CDSub += ((CDSub > 0) * (radius * y)) - ((CDSub < 0) * (radius * y));
-		DASub += ((DASub > 0) * (radius * x)) - ((DASub < 0) * (radius * x));
-		pair<double, double> xy;
+		AB.substitute(trajectory);
+		BC.substitute(trajectory);
+		CD.substitute(trajectory);
+		DA.substitute(trajectory);
 		
 		/*
-		cout << "AB " << ABSub << " BC " << BCSub << endl;
-		cout << "CD " << CDSub << " DA " << DASub << endl;
+		cout << "AB " << AB.sub << " BC " << BC.sub << endl;
+		cout << "CD " << CD.sub << " DA " << DA.sub << endl;
 		cout << "TR " << trajectory.x << " " << trajectory.y << endl << endl;
 		*/
 		
-		double* min = &ABSub;
-		if(BCSub < *min) min = &BCSub;
-		if(CDSub < *min) min = &CDSub;
-		if(DASub < *min) min = &DASub;
-		if(*min < 0)
+		Line* min = &AB;
+		if(BC.sub < min->sub) min = &BC;
+		if(CD.sub < min->sub) min = &CD;
+		if(DA.sub < min->sub) min = &DA;
+		if(min->sub < 0)
 		{
-			if(min == &ABSub)
+			if(min == &AB)
 			{
-				//cout << "The ball bounced into the wall AB." << endl;
-				xy = AB.solve(BC, -ABSub, BCSub);
-				cout << "XY " << xy.first << " " << xy.second << endl << endl;
-				trajectory = Vector(xy.first, xy.second);
+				trajectory = Line(AB.A, AB.B, AB.C - (-AB.sub)).solve(Line(BC.A, BC.B, BC.C - BC.sub));
 				continue;
 			}
-			if(min == &BCSub)
+			if(min == &BC)
 			{
-				//cout << "The ball bounced into the wall BC." << endl;
-				xy = BC.solve(CD, -BCSub, CDSub);
-				cout << "XY " << xy.first << " " << xy.second << endl << endl;
-				trajectory = Vector(xy.first, xy.second);
+				trajectory = Line(BC.A, BC.B, BC.C - (-BC.sub)).solve(Line(CD.A, CD.B, CD.C - CD.sub));
 				continue;
 			}
-			if(min == &CDSub)
+			if(min == &CD)
 			{
-				//cout << "The ball bounced into the wall CD." << endl;
-				xy = CD.solve(DA, -CDSub, DASub);
-				cout << "XY " << xy.first << " " << xy.second << endl << endl;
-				trajectory = Vector(xy.first, xy.second);
+				trajectory = Line(CD.A, CD.B, CD.C - (-CD.sub)).solve(Line(DA.A, DA.B, DA.C - DA.sub));
 				continue;
 			}
-			if(min == &DASub)
+			if(min == &DA)
 			{
-				//cout << "The ball bounced into the wall DA." << endl;
-				xy = DA.solve(AB, -DASub, ABSub);
-				cout << "XY " << xy.first << " " << xy.second << endl << endl;
-				trajectory = Vector(xy.first, xy.second);
+				trajectory = Line(DA.A, DA.B, DA.C - (-DA.sub)).solve(Line(AB.A, AB.B, AB.C - AB.sub));
 				continue;
 			}
 		}
@@ -125,11 +101,6 @@ void simpleCase(Field& f)
 	cin >> origin;
 	cout << "Width and height of field: ";
 	cin >> width >> height;
-	/*if((width / height) != 2)
-	{
-		cout << "Invalid width and height. Try again." << endl;
-		return;
-	}*/
 	cin >> ball;
 	f = Field(origin, width, height, ball);	
 }
@@ -143,11 +114,6 @@ void complexCase(Field& f)
 		cout << "  " << i + 1 << ") ";
 		cin >> endPoints[i];
 	}
-	/*if(((endPoints[2].x - endPoints[0].x) / (endPoints[2].y - endPoints[0].y)) != 0.5)
-	{
-		cout << "Invalid field points. Try again." << endl;
-		return;
-	}*/
 	cin >> ball;
 	f = Field(endPoints, ball);
 }

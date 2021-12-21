@@ -7,6 +7,7 @@ class Field
 		Ball ball;
 		Point startingPoint;
 		Point endPoints[4];
+		double width, height;
 		
 	public:
 		Field() {}
