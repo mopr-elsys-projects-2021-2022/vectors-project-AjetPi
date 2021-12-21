@@ -46,7 +46,8 @@ void Field::hit(Point target, double power)
 		Line TR(ball.center, Point(trajectory.x, trajectory.y));
 		for(int i = 0; i < 4; ++i)
 		{
-			if((TR.substitute(Vector(endPoints[i].x, endPoints[i].y))) < 0.001)
+			TR.substitute(Vector(endPoints[i].x, endPoints[i].y);
+			if((TR.sub < 0.001) && (TR.sub >= 0))
 			{
 				if(signbit(trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x))
 				{
