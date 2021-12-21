@@ -46,7 +46,7 @@ void Field::hit(Point target, double power)
 		Line TR(ball.center, Point(trajectory.x, trajectory.y));
 		for(int i = 0; i < 4; ++i)
 		{
-			if(!(TR.substitute(endPoints[i])))
+			if((TR.substitute(Vector(endPoints[i].x, endPoints[i].y))) < 0.001)
 			{
 				if(signbit(trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x))
 				{
@@ -73,11 +73,6 @@ void Field::hit(Point target, double power)
 		CD.substitute(trajectory);
 		DA.substitute(trajectory);
 		
-		cout << "AB " << AB.sub << " BC " << BC.sub << endl;
-		cout << "CD " << CD.sub << " DA " << DA.sub << endl;
-		cout << "TR " << trajectory.x << " " << trajectory.y << endl;
-		cout << "BALL " << ball.center.x << " " << ball.center.y << endl << endl;
-		
 		Line* min = &AB;
 		if(BC.sub < min->sub) min = &BC;
 		if(CD.sub < min->sub) min = &CD;
@@ -88,24 +83,28 @@ void Field::hit(Point target, double power)
 			if(min == &AB)
 			{
 				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				cout << "The ball bounced into the wall AB at " << ball.center << endl;
 				trajectory = l.solve(Line(BC.A, BC.B, BC.C - BC.sub));
 				continue;
 			}
 			if(min == &BC)
 			{
 				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				cout << "The ball bounced into the wall BC at " << ball.center << endl;
 				trajectory = l.solve(Line(CD.A, CD.B, CD.C - CD.sub));
 				continue;
 			}
 			if(min == &CD)
 			{
 				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				cout << "The ball bounced into the wall CD at " << ball.center << endl;
 				trajectory = l.solve(Line(DA.A, DA.B, DA.C - DA.sub));
 				continue;
 			}
 			if(min == &DA)
 			{
 				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				cout << "The ball bounced into the wall DA at " << ball.center << endl;
 				trajectory = l.solve(Line(AB.A, AB.B, AB.C - AB.sub));
 				continue;
 			}
