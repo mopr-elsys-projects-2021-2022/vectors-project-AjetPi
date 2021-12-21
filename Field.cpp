@@ -37,21 +37,42 @@ void Field::hit(Point target, double power)
 	double hratio = abs(CD.C - AB.C) / height;
 	DA.C -= radius * wratio; BC.C -= radius * wratio;
 	CD.C -= radius * hratio; AB.C -= radius * hratio;
+	bool someOtherFlag = 1;
 	Vector trajectory = Vector(ball.center.x, ball.center.y) + Vector(ball.center, target) * power;
 	
-	short unsigned int flag = 1;
+	bool flag = 1;
 	while(flag)
 	{
+		Line TR(ball.center, Point(trajectory.x, trajectory.y));
+		for(int i = 0; i < 4; ++i)
+		{
+			if(!(TR.substitute(endPoints[i])))
+			{
+				if(abs(trajectory.x - ball.center.x) >= abs(endPoints[i].x - ball.center.x))
+				{
+					ball.center = startingPoint;
+					flag = 0;
+					return;
+				}
+				if(someOtherFlag)
+				{
+					DA.C += radius * wratio; BC.C += radius * wratio;
+					CD.C += radius * hratio; AB.C += radius * hratio;
+					someOtherFlag = 0;
+				}
+				break;
+			}
+		}
+		
 		AB.substitute(trajectory);
 		BC.substitute(trajectory);
 		CD.substitute(trajectory);
 		DA.substitute(trajectory);
 		
-		/*
 		cout << "AB " << AB.sub << " BC " << BC.sub << endl;
 		cout << "CD " << CD.sub << " DA " << DA.sub << endl;
-		cout << "TR " << trajectory.x << " " << trajectory.y << endl << endl;
-		*/
+		cout << "TR " << trajectory.x << " " << trajectory.y << endl;
+		cout << "BALL " << ball.center.x << " " << ball.center.y << endl << endl;
 		
 		Line* min = &AB;
 		if(BC.sub < min->sub) min = &BC;
@@ -59,24 +80,29 @@ void Field::hit(Point target, double power)
 		if(DA.sub < min->sub) min = &DA;
 		if(min->sub < 0)
 		{
+			Line l(min->A, min->B, min->C - (-(min->sub)));
 			if(min == &AB)
 			{
-				trajectory = Line(AB.A, AB.B, AB.C - (-AB.sub)).solve(Line(BC.A, BC.B, BC.C - BC.sub));
+				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				trajectory = l.solve(Line(BC.A, BC.B, BC.C - BC.sub));
 				continue;
 			}
 			if(min == &BC)
 			{
-				trajectory = Line(BC.A, BC.B, BC.C - (-BC.sub)).solve(Line(CD.A, CD.B, CD.C - CD.sub));
+				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				trajectory = l.solve(Line(CD.A, CD.B, CD.C - CD.sub));
 				continue;
 			}
 			if(min == &CD)
 			{
-				trajectory = Line(CD.A, CD.B, CD.C - (-CD.sub)).solve(Line(DA.A, DA.B, DA.C - DA.sub));
+				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				trajectory = l.solve(Line(DA.A, DA.B, DA.C - DA.sub));
 				continue;
 			}
 			if(min == &DA)
 			{
-				trajectory = Line(DA.A, DA.B, DA.C - (-DA.sub)).solve(Line(AB.A, AB.B, AB.C - AB.sub));
+				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
+				trajectory = l.solve(Line(AB.A, AB.B, AB.C - AB.sub));
 				continue;
 			}
 		}

@@ -1,8 +1,8 @@
 #include "Line.h"
 
-void Line::substitute(const Vector& v)
+double Line::substitute(const Vector& v)
 {
-	sub = A * v.x + B * v.y + C;
+	return (sub = A * v.x + B * v.y + C);
 }
 Vector Line::solve(const Line& other)
 {
