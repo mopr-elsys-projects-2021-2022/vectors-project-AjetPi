@@ -1,21 +1,30 @@
-#include "Vector.h"
-#include "Line.h"
 #include "Field.h"
 
 Field::Field() {}
 Field::Field(const Point& origin, double width, double height, const Ball& ball) : ball(ball), startingPoint(ball.center), width(width), height(height)
 {
-	endPoints[0] = Point(origin.x, origin.y);
-	endPoints[1] = Point(origin.x + width, origin.y);
-	endPoints[2] = Point(origin.x + width, origin.y + height);
-	endPoints[3] = Point(origin.x, origin.y + height);
+	endPoints[0] = Point(origin.x, origin.y); // A
+	endPoints[1] = Point(origin.x + width, origin.y); // B
+	endPoints[2] = Point(origin.x + width, origin.y + height); // C
+	endPoints[3] = Point(origin.x, origin.y + height); // D
+	
+	sideWalls[0] = Line(endPoints[0], endPoints[1]); // AB
+	sideWalls[1] = Line(endPoints[1], endPoints[2]); // BC
+	sideWalls[2] = Line(sideWalls[0], endPoints[2]); // CD
+	sideWalls[3] = Line(sideWalls[1], endPoints[3]); // DA
 }
-Field::Field(Point(& endPoints)[POINTS], const Ball& ball) : ball(ball), startingPoint(ball.center)
+Field::Field(Point(& endPoints)[FOUR], const Ball& ball) : ball(ball), startingPoint(ball.center)
 {
-	for (int i = 0; i < POINTS; ++i)
+	for (int i = 0; i < FOUR; ++i)
 	{
 		this->endPoints[i] = endPoints[i];
 	}
+	
+	sideWalls[0] = Line(endPoints[0], endPoints[1]);
+	sideWalls[1] = Line(endPoints[1], endPoints[2]);
+	sideWalls[2] = Line(sideWalls[0], endPoints[2]);
+	sideWalls[3] = Line(sideWalls[1], endPoints[3]);
+	
 	width = endPoints[0].length(endPoints[1]);
 	height = endPoints[3].length(endPoints[0]);
 }
@@ -28,26 +37,24 @@ void Field::hit(const Point& target, double power)
 		return;
 	}
 	
-	Line AB(endPoints[0], endPoints[1]);
-	Line BC(endPoints[1], endPoints[2]);
-	Line CD(endPoints[2], endPoints[3]);
-	Line DA(endPoints[3], endPoints[0]);
-	double radius = ball.radius();
-	double wratio = abs(DA.C - BC.C) / width;
-	double hratio = abs(CD.C - AB.C) / height;
-	DA.C -= radius * wratio; BC.C -= radius * wratio;
-	CD.C -= radius * hratio; AB.C -= radius * hratio;
 	bool someOtherFlag = 1;
+	double radius = ball.radius();
+	double wratio = abs(sideWalls[3].C - sideWalls[1].C) / width;
+	double hratio = abs(sideWalls[2].C - sideWalls[0].C) / height;
+	for(int i = 0; i < FOUR; ++i)
+	{
+		sideWalls[i].C -= radius * ((hratio * !(i % 2)) + (wratio * (i % 2)));
+	}
 	Vector trajectory = Vector(ball.center.x, ball.center.y) + Vector(ball.center, target) * power;
 	
 	bool flag = 1;
 	while(flag)
 	{
-		Line TR(ball.center, Point(trajectory.x, trajectory.y));
-		for(int i = 0; i < POINTS; ++i)
+		Line trj(ball.center, (Point)trajectory);
+		for(int i = 0; i < FOUR; ++i)
 		{
-			TR.substitute(Vector(endPoints[i].x, endPoints[i].y));
-			if((TR.sub < 0.001) && (TR.sub >= 0))
+			trj.substitute(endPoints[i]);
+			if((trj.D < 0.001) && (trj.D >= 0))
 			{
 				if(signbit(trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x))
 				{
@@ -61,59 +68,43 @@ void Field::hit(const Point& target, double power)
 				}
 				if(someOtherFlag)
 				{
-					DA.C += radius * wratio; BC.C += radius * wratio;
-					CD.C += radius * hratio; AB.C += radius * hratio;
 					someOtherFlag = 0;
+					for(int i = 0; i < FOUR; ++i)
+					{
+						sideWalls[i].C += radius * ((hratio * !(i % 2)) + (wratio * (i % 2)));
+					}
 				}
 				break;
 			}
 		}
 		
-		AB.substitute(trajectory);
-		BC.substitute(trajectory);
-		CD.substitute(trajectory);
-		DA.substitute(trajectory);
-		
-		Line* min = &AB;
-		if(BC.sub < min->sub) min = &BC;
-		if(CD.sub < min->sub) min = &CD;
-		if(DA.sub < min->sub) min = &DA;
-		if(min->sub < 0)
+		for(int i = 0; i < FOUR; ++i)
 		{
-			Line l(min->A, min->B, min->C - (-(min->sub)));
-			if(min == &AB)
+			sideWalls[i].substitute((Point)trajectory);
+		}
+		int i;
+		double min = 0;
+		for(int y = 0; y < FOUR; ++y)
+		{
+			if(sideWalls[y].D < min)
 			{
-				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
-				cout << "The ball bounced into the wall AB at " << ball.center << endl;
-				trajectory = l.solve(Line(BC.A, BC.B, BC.C - BC.sub));
-				continue;
+				i = y;
+				min = sideWalls[y].D;
 			}
-			if(min == &BC)
-			{
-				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
-				cout << "The ball bounced into the wall BC at " << ball.center << endl;
-				trajectory = l.solve(Line(CD.A, CD.B, CD.C - CD.sub));
-				continue;
-			}
-			if(min == &CD)
-			{
-				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
-				cout << "The ball bounced into the wall CD at " << ball.center << endl;
-				trajectory = l.solve(Line(DA.A, DA.B, DA.C - DA.sub));
-				continue;
-			}
-			if(min == &DA)
-			{
-				ball.center = Point(min->solve(TR).x, min->solve(TR).y);
-				cout << "The ball bounced into the wall DA at " << ball.center << endl;
-				trajectory = l.solve(Line(AB.A, AB.B, AB.C - AB.sub));
-				continue;
-			}
+		}
+		if(min)
+		{
+			sideWalls[i].D = -(sideWalls[i].D);
+			Line tmp(sideWalls[i]);
+			ball.center = sideWalls[i].solve(trj);
+			cout << "The ball bounced into the wall at " << ball.center << endl;
+			trajectory = tmp.solve(Line(sideWalls[(i + 1) % 4]));
+			continue;
 		}
 		
 		flag = 0;
 	}
-	ball.center = Point(trajectory.x, trajectory.y);
+	ball.center = (Point)trajectory;
 }
 
 bool Field::checkBall(const Ball& ball)
@@ -124,7 +115,7 @@ bool Field::checkWidthHeight(double width, double height)
 {
 	return (bool)(((width / height) == 2) || ((width / height) == 0.5));
 }
-bool Field::checkEndPoints(Point(& endPoints)[POINTS])
+bool Field::checkEndPoints(Point(& endPoints)[FOUR])
 {
 	return true;
 }
@@ -168,9 +159,9 @@ void Field::simpleCase(Field& f)
 }
 void Field::complexCase(Field& f)
 {
-	Point endPoints[POINTS];
+	Point endPoints[FOUR];
 	cout << "Field points: " << endl;
-	for (int i = 0; i < POINTS; ++i)
+	for (int i = 0; i < FOUR; ++i)
 	{
 		cout << "  " << i + 1 << ") ";
 		cin >> endPoints[i];
@@ -198,7 +189,7 @@ void Field::complexCase(Field& f)
 ostream& operator<<(ostream& out, const Field& f)
 {
 	out << "Field points:" << endl;
-	for(int i = 0; i < POINTS; ++i)
+	for(int i = 0; i < FOUR; ++i)
 	{
 		out << "  " << f.endPoints[i] << endl;
 	}

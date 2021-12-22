@@ -1,15 +1,16 @@
 #pragma once
 #include "Ball.h"
-#define POINTS 4
+#include "Line.h"
+#define FOUR 4
 
 class Field
 {
 	private:
 		Ball ball;
 		Point startingPoint;
-		Point endPoints[POINTS];
+		Point endPoints[FOUR];
+		Line sideWalls[FOUR];
 		double width, height;
-		// Line sideWalls[4];
 		
 		friend ostream& operator<<(ostream& out, const Field& f);
 		
@@ -21,7 +22,7 @@ class Field
 		void hit(const Point&, double);
 		static bool checkBall(const Ball& ball);
 		static bool checkWidthHeight(double, double);
-		static bool checkEndPoints(Point(&)[POINTS]);
+		static bool checkEndPoints(Point(&)[FOUR]);
 		static void ballCase(Field&);
 		static void simpleCase(Field&);
 		static void complexCase(Field&);

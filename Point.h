@@ -28,9 +28,10 @@ class Point
 		
 	public:
 		Point() : Point(0, 0) {}
+		Point(const Point& p) : Point(p.x, p.y) {}
 		Point(double x, double y) : x(x), y(y) {}
 		
-		double length(const Point& p)
+		double length(const Point& p) const // Length between two points
 		{
 			return (sqrt(pow(p.x - x, 2) + pow(p.y - y, 2)));
 		}
