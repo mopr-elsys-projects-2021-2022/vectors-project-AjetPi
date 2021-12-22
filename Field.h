@@ -1,24 +1,28 @@
 #pragma once
 #include "Ball.h"
+#define POINTS 4
 
 class Field
 {
 	private:
 		Ball ball;
 		Point startingPoint;
-		Point endPoints[4];
+		Point endPoints[POINTS];
 		double width, height;
-		
-	public:
-		Field() {}
-		Field(Point origin, double width, double height, Ball ball);
-		Field(Point endPoints[4], Ball ball);
-		
-		void hit(Point target, double power);
-		
-		friend void ballCase(Field& f);
-		friend void simpleCase(Field& f);
-		friend void complexCase(Field& f);
+		// Line sideWalls[4];
 		
 		friend ostream& operator<<(ostream& out, const Field& f);
+		
+	public:
+		Field();
+		Field(const Point&, double, double, const Ball&);
+		Field(Point(&)[4], const Ball&);
+		
+		void hit(const Point&, double);
+		static bool checkBall(const Ball& ball);
+		static bool checkWidthHeight(double, double);
+		static bool checkEndPoints(Point(&)[POINTS]);
+		static void ballCase(Field&);
+		static void simpleCase(Field&);
+		static void complexCase(Field&);
 };

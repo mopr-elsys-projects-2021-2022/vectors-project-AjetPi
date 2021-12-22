@@ -1,26 +1,26 @@
-#include "Field.h"
-#include "Line.h"
 #include "Vector.h"
-#include <cmath>
+#include "Line.h"
+#include "Field.h"
 
-Field::Field(Point origin, double width, double height, Ball ball) : ball(ball), startingPoint(ball.center), width(width), height(height)
+Field::Field() {}
+Field::Field(const Point& origin, double width, double height, const Ball& ball) : ball(ball), startingPoint(ball.center), width(width), height(height)
 {
 	endPoints[0] = Point(origin.x, origin.y);
 	endPoints[1] = Point(origin.x + width, origin.y);
 	endPoints[2] = Point(origin.x + width, origin.y + height);
 	endPoints[3] = Point(origin.x, origin.y + height);
 }
-Field::Field(Point endPoints[4], Ball ball) : ball(ball), startingPoint(ball.center)
+Field::Field(Point(& endPoints)[POINTS], const Ball& ball) : ball(ball), startingPoint(ball.center)
 {
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < POINTS; ++i)
 	{
 		this->endPoints[i] = endPoints[i];
 	}
-	width = sqrt(pow(endPoints[1].x - endPoints[0].x, 2) + pow(endPoints[1].y - endPoints[0].y, 2));
-	height = sqrt(pow(endPoints[0].x - endPoints[3].x, 2) + pow(endPoints[0].y - endPoints[3].y, 2));
+	width = endPoints[0].length(endPoints[1]);
+	height = endPoints[3].length(endPoints[0]);
 }
 
-void Field::hit(Point target, double power)
+void Field::hit(const Point& target, double power)
 {
 	if((power < 1) || (power > 10))
 	{
@@ -32,7 +32,7 @@ void Field::hit(Point target, double power)
 	Line BC(endPoints[1], endPoints[2]);
 	Line CD(endPoints[2], endPoints[3]);
 	Line DA(endPoints[3], endPoints[0]);
-	double radius = ball.diameter / 2;
+	double radius = ball.radius();
 	double wratio = abs(DA.C - BC.C) / width;
 	double hratio = abs(CD.C - AB.C) / height;
 	DA.C -= radius * wratio; BC.C -= radius * wratio;
@@ -44,7 +44,7 @@ void Field::hit(Point target, double power)
 	while(flag)
 	{
 		Line TR(ball.center, Point(trajectory.x, trajectory.y));
-		for(int i = 0; i < 4; ++i)
+		for(int i = 0; i < POINTS; ++i)
 		{
 			TR.substitute(Vector(endPoints[i].x, endPoints[i].y));
 			if((TR.sub < 0.001) && (TR.sub >= 0))
@@ -116,42 +116,89 @@ void Field::hit(Point target, double power)
 	ball.center = Point(trajectory.x, trajectory.y);
 }
 
-void ballCase(Field& f)
+bool Field::checkBall(const Ball& ball)
+{
+	return (bool)(ball.diameter >= 0);
+}
+bool Field::checkWidthHeight(double width, double height)
+{
+	return (bool)(((width / height) == 2) || ((width / height) == 0.5));
+}
+bool Field::checkEndPoints(Point(& endPoints)[POINTS])
+{
+	return true;
+}
+
+void Field::ballCase(Field& f)
 {
 	Ball ball;
 	cin >> ball;
+	if(!Field::checkBall(ball))
+	{
+		cout << "Invalid ball. Try again." << endl;
+		return;
+	}
+	
 	f = Field(f.endPoints, ball);
 }
-void simpleCase(Field& f)
+void Field::simpleCase(Field& f)
 {
 	Point origin;
-	double width, height;
-	Ball ball;
 	cout << "Point of origin of field: ";
 	cin >> origin;
+	
+	double width, height;
 	cout << "Width and height of field: ";
 	cin >> width >> height;
+	if(!Field::checkWidthHeight(width, height))
+	{
+		cout << "Invalid width and height. Try again." << endl;
+		return;
+	}
+	
+	Ball ball;
 	cin >> ball;
+	if(!Field::checkBall(ball))
+	{
+		cout << "Invalid ball. Try again." << endl;
+		return;
+	}
+	
 	f = Field(origin, width, height, ball);	
 }
-void complexCase(Field& f)
+void Field::complexCase(Field& f)
 {
-	Point endPoints[4];
-	Ball ball;
+	Point endPoints[POINTS];
 	cout << "Field points: " << endl;
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < POINTS; ++i)
 	{
 		cout << "  " << i + 1 << ") ";
 		cin >> endPoints[i];
 	}
+	
+	double width = endPoints[0].length(endPoints[1]);
+	double height = endPoints[3].length(endPoints[0]);
+	if(!Field::checkWidthHeight(width, height))
+	{
+		cout << "Invalid width and height. Try again." << endl;
+		return;
+	}
+	
+	Ball ball;
 	cin >> ball;
+	if(!Field::checkBall(ball))
+	{
+		cout << "Invalid ball. Try again." << endl;
+		return;
+	}
+	
 	f = Field(endPoints, ball);
 }
 
 ostream& operator<<(ostream& out, const Field& f)
 {
 	out << "Field points:" << endl;
-	for(int i = 0; i < 4; ++i)
+	for(int i = 0; i < POINTS; ++i)
 	{
 		out << "  " << f.endPoints[i] << endl;
 	}

@@ -1,27 +1,36 @@
 #pragma once
 #include "Point.h"
 
-struct Ball
+class Ball
 {
-	Point center;
-	double diameter;
-	
-	Ball(Point center = Point(), double diameter = 5) : center(center), diameter(diameter) {}
+	private:
+		Point center;
+		double diameter;
+		
+		friend class Field;
+		friend istream& operator>>(istream& in, Ball& b)
+		{
+			cout << "Starting point of ball: ";
+			in >> b.center;
+			cout << "Diameter of ball: ";
+			in >> b.diameter;
+			
+			return in;
+		}
+		friend ostream& operator<<(ostream& out, const Ball& b)
+		{
+			out << "Ball center - " << b.center << endl;
+			out << "Ball diameter - " << b.diameter << endl;
+			
+			return out;
+		}
+		
+	public:
+		Ball() : Ball(Point(), 0) {}
+		Ball(const Point& center, double diameter) : center(center), diameter(diameter) {}
+		
+		double radius()
+		{
+			return (diameter / 2);
+		}
 };
-
-inline istream& operator>>(istream& in, Ball& b)
-{
-	cout << "Starting point of ball: ";
-	in >> b.center;
-	cout << "Diameter of ball: ";
-	in >> b.diameter;
-	
-	return in;
-}
-inline ostream& operator<<(ostream& out, const Ball& b)
-{
-	out << "Ball center - " << b.center << endl;
-	out << "Ball diameter - " << b.diameter << endl;
-	
-	return out;
-}

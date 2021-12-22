@@ -19,15 +19,15 @@ int main()
 				{
 					case 's': // 's' stands for "simple case" - the horizontal side of the field is parallel to the x-axis, while the other one - to the y-axis
 						cout << endl;
-						simpleCase(field);
+						Field::simpleCase(field);
 						break; 
 					case 'c': // 'c' stands for "complex case" - it is not nessecary for the sides of the field to be perpendicular to any axis
 						cout << endl;
-						complexCase(field);
+						Field::complexCase(field);
 						break;
 					case 'b': // 'b' stands for "ball case" - keeps the same field and only changes the ball position
 						cout << endl;
-						ballCase(field);
+						Field::ballCase(field);
 						break;
 					default:
 						cout << "Invalid command. Try again." << endl;

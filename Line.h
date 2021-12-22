@@ -10,9 +10,10 @@ class Line
 		friend class Field;
 		
 	public:
-		Line(double A = 0, double B = 0, double C = 0) : A(A), B(B), C(C) {}
-		Line(Point p1 = Point(), Point p2 = Point()) : A(-(p2.y - p1.y)), B(p2.x - p1.x), C(-(A * p1.x + B * p1.y)) {}
+		Line();
+		Line(double, double, double);
+		Line(const Point&, const Point&);
 		
-		double substitute(const Vector& v);
-		Vector solve(const Line& other);
+		double substitute(const Vector&);
+		Vector solve(const Line&);
 };
