@@ -8,7 +8,7 @@ class Field
 	
 	private:
 		bool ratioFlag = false; // Flag whether modify function has been called or not
-		double width, height, widthRatio, heightRatio; // Left-hand side free member equation to width or height ratio
+		double width, height, widthRatio, heightRatio; // Left-hand side free member of equation to width or height ratio
 		Point endPoints[FOUR];
 		Line sideWalls[FOUR]; // Field wall equations
 		Ball ball;
