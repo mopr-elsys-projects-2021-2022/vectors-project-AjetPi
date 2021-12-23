@@ -16,7 +16,7 @@ class Line
 		Line();
 		
 		bool parallel(const Line&); // Check whether two lines are parallel
-		bool perpendicular(const Line&); // Check whether two line are perpendicular
+		bool perpendicular(const Line&); // Check whether two lines are perpendicular
 		
 		double substitute(const Point&); // Substitute coordinates in equation
 		Point solve(const Line&) const; // Solve system of two equations with two unknown coordinates
