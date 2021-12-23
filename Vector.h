@@ -1,17 +1,16 @@
 #pragma once
 #include "Point.h"
 
-class Vector : private Point // Inherit coordinates
+class Vector : private Point // Inherit x and y coordinate variables
 {
-	private:
-		friend class Field;
-		
+	friend class Field;
+	
 	public:
-		Vector();
-		Vector(const Point&);
 		Vector(double, double);
+		Vector(const Point&);
 		Vector(const Point&, const Point&); // Vector between two points
+		Vector();
 		
-		Vector operator+(const Vector&);
-		Vector operator*(double);
+		Vector& operator+=(const Vector&);
+		Vector operator*(double) const;
 };

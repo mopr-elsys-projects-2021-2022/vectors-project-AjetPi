@@ -1,7 +1,6 @@
 #include "Field.h"
 
-Field::Field() {}
-Field::Field(const Point& origin, double width, double height, const Ball& ball) : ball(ball), startingPoint(ball.center), width(width), height(height)
+Field::Field(double width, double height, const Point& origin, const Ball& ball) : width(width), height(height), ball(ball)
 {
 	endPoints[0] = Point(origin.x, origin.y); // A
 	endPoints[1] = Point(origin.x + width, origin.y); // B
@@ -13,7 +12,7 @@ Field::Field(const Point& origin, double width, double height, const Ball& ball)
 	sideWalls[2] = Line(sideWalls[0], endPoints[2]); // CD
 	sideWalls[3] = Line(sideWalls[1], endPoints[3]); // DA
 }
-Field::Field(Point(& endPoints)[FOUR], const Ball& ball) : ball(ball), startingPoint(ball.center)
+Field::Field(Point(& endPoints)[FOUR], const Ball& ball) : ball(ball)
 {
 	for (int i = 0; i < FOUR; ++i)
 	{
@@ -26,53 +25,108 @@ Field::Field(Point(& endPoints)[FOUR], const Ball& ball) : ball(ball), startingP
 	sideWalls[3] = Line(sideWalls[1], endPoints[3]);
 	
 	width = endPoints[0].length(endPoints[1]);
-	height = endPoints[3].length(endPoints[0]);
+	height = endPoints[1].length(endPoints[2]);
+}
+Field::Field() {}
+
+bool Field::checkFieldRatio(double width, double height)
+{
+	return (bool)(((width / height) == 2) || ((width / height) == 0.5));
+}
+bool Field::checkFieldPoints(Point(& endPoints)[FOUR])
+{
+	Line tmpWalls[FOUR];
+	for(int i = 0; i < FOUR; ++i)
+	{
+		tmpWalls[i] = Line(endPoints[i], endPoints[(i + 1) % FOUR]);
+	}
+	if(!((tmpWalls[0].parallel(tmpWalls[2])) && (tmpWalls[1].parallel(tmpWalls[3])) && (tmpWalls[0].perpendicular(tmpWalls[1]))))
+	{
+		return false;
+	}
+	
+	double width = endPoints[0].length(endPoints[1]);
+	double height = endPoints[1].length(endPoints[2]);
+	if((width != endPoints[2].length(endPoints[3])) || (height != endPoints[3].length(endPoints[0])))
+	{
+		return false;
+	}
+	
+	return checkFieldRatio(width, height);
+}
+bool Field::checkBallCenter(const Ball& ball)
+{
+	for(int i = 0; i < FOUR; ++i)
+	{
+		if((sideWalls[i].substitute(ball.center)) < 0)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+bool Field::checkBallDiameter(const Ball& ball)
+{
+	return (bool)(ball.diameter >= 0);
+}
+bool Field::checkPower(double power)
+{
+	return (bool)((power >= 1) && (power <= 10));
 }
 
+void Field::modify()
+{
+	if(!ratioFlag)
+	{
+		widthRatio = abs(sideWalls[3].C - sideWalls[1].C) / width;
+		heightRatio = abs(sideWalls[2].C - sideWalls[0].C) / height;
+		for(int i = 0; i < FOUR; ++i)
+		{
+			sideWalls[i].C -= ball.radius * ((heightRatio * !(i % 2)) + (widthRatio * (i % 2)));
+		}
+	}
+	else
+	{
+		for(int i = 0; i < FOUR; ++i)
+		{
+			sideWalls[i].C += ball.radius * ((heightRatio * !(i % 2)) + (widthRatio * (i % 2)));
+		}
+	}
+	
+	ratioFlag = !ratioFlag;
+}
 void Field::hit(const Point& target, double power)
 {
-	if((power < 1) || (power > 10))
+	if(!Field::checkPower(power))
 	{
 		cout << "Invalid power. Try again." << endl;
 		return;
 	}
 	
-	bool someOtherFlag = 1;
-	double radius = ball.radius();
-	double wratio = abs(sideWalls[3].C - sideWalls[1].C) / width;
-	double hratio = abs(sideWalls[2].C - sideWalls[0].C) / height;
-	for(int i = 0; i < FOUR; ++i)
-	{
-		sideWalls[i].C -= radius * ((hratio * !(i % 2)) + (wratio * (i % 2)));
-	}
-	Vector trajectory = Vector(ball.center.x, ball.center.y) + Vector(ball.center, target) * power;
+	modify();
+	ball.trajectory += Vector(ball.center, target) * power; // Change ball trajectory
 	
-	bool flag = 1;
+	bool flag = true;
 	while(flag)
 	{
-		Line trj(ball.center, (Point)trajectory);
+		ball.equation = Line(ball.center, (Point)ball.trajectory);
 		for(int i = 0; i < FOUR; ++i)
 		{
-			trj.substitute(endPoints[i]);
-			if((trj.D < 0.001) && (trj.D >= 0))
+			ball.equation.substitute(endPoints[i]);
+			if((ball.equation.D < 0.001) && (ball.equation.D >= 0)) // Right-hand side free member of equation could equal an insignificantly small fraction
 			{
-				if(signbit(trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x))
+				if(signbit(ball.trajectory.x - ball.center.x) != signbit(endPoints[i].x - ball.center.x)) // Check whether the distances between these points are of the same sign
 				{
 					continue;
 				}
-				if(abs(trajectory.x - ball.center.x) >= abs(endPoints[i].x - ball.center.x))
+				
+				modify(); // No longer take ball radius into account
+				if(abs(ball.trajectory.x - ball.center.x) >= abs(endPoints[i].x - ball.center.x)) // Check if distance between points is short enough for the ball to enter the corner
 				{
-					ball.center = startingPoint;
-					flag = 0;
+					ball = Ball(ball.diameter, ball.startingPoint); // Return the ball to its starting position
+					flag = false;
 					return;
-				}
-				if(someOtherFlag)
-				{
-					someOtherFlag = 0;
-					for(int i = 0; i < FOUR; ++i)
-					{
-						sideWalls[i].C += radius * ((hratio * !(i % 2)) + (wratio * (i % 2)));
-					}
 				}
 				break;
 			}
@@ -80,110 +134,112 @@ void Field::hit(const Point& target, double power)
 		
 		for(int i = 0; i < FOUR; ++i)
 		{
-			sideWalls[i].substitute((Point)trajectory);
+			sideWalls[i].substitute((Point)ball.trajectory);
 		}
-		int i;
-		double min = 0;
+		int i; // Potential wall index
+		double min = 0; // Find the lowest right-hand side free member
 		for(int y = 0; y < FOUR; ++y)
 		{
-			if(sideWalls[y].D < min)
+			if(sideWalls[y].D < min) // This will only occur if we have a negative value
 			{
 				i = y;
 				min = sideWalls[y].D;
 			}
 		}
-		if(min)
+		if(min) // If a negative value has been saved ergo if the ball's trajectory passes a wall
 		{
 			sideWalls[i].D = -(sideWalls[i].D);
-			Line tmp(sideWalls[i]);
-			ball.center = sideWalls[i].solve(trj);
-			cout << "The ball bounced into the wall at " << ball.center << endl;
-			trajectory = tmp.solve(Line(sideWalls[(i + 1) % 4]));
+			Line tmp(sideWalls[i]); // "Mirror" line which insures that the ball will be on the opposite side of the wall
+			ball.center = sideWalls[i].solve(ball.equation); // Set ball center to ricochet or bounce point
+			cout << "The ball bounced into the wall at " << ball.center << endl; // Informatory message
+			ball.trajectory = tmp.solve(Line(sideWalls[(i + 1) % FOUR])); // Set new ball trajectory after ricochet
 			continue;
 		}
 		
 		flag = 0;
 	}
-	ball.center = (Point)trajectory;
-}
-
-bool Field::checkBall(const Ball& ball)
-{
-	return (bool)(ball.diameter >= 0);
-}
-bool Field::checkWidthHeight(double width, double height)
-{
-	return (bool)(((width / height) == 2) || ((width / height) == 0.5));
-}
-bool Field::checkEndPoints(Point(& endPoints)[FOUR])
-{
-	return true;
+	
+	if(ratioFlag)
+	{
+		modify();
+	}
+	ball.center = (Point)ball.trajectory; // Finalise ball center position
 }
 
 void Field::ballCase(Field& f)
 {
 	Ball ball;
 	cin >> ball;
-	if(!Field::checkBall(ball))
+	if(!(f.checkBallCenter(ball)))
 	{
-		cout << "Invalid ball. Try again." << endl;
+		cout << "Invalid ball center. Try again." << endl;
 		return;
 	}
-	
-	f = Field(f.endPoints, ball);
+	if(!(f.checkBallDiameter(ball)))
+	{
+		cout << "Invalid ball diameter. Try again." << endl;
+		return;
+	}
+	f.ball = ball;
 }
 void Field::simpleCase(Field& f)
 {
 	Point origin;
 	cout << "Point of origin of field: ";
 	cin >> origin;
-	
 	double width, height;
 	cout << "Width and height of field: ";
 	cin >> width >> height;
-	if(!Field::checkWidthHeight(width, height))
+	if(!(f.checkFieldRatio(width, height)))
 	{
 		cout << "Invalid width and height. Try again." << endl;
 		return;
 	}
+	f = Field(width, height, origin, Ball());
 	
 	Ball ball;
 	cin >> ball;
-	if(!Field::checkBall(ball))
+	if(!(f.checkBallCenter(ball)))
 	{
-		cout << "Invalid ball. Try again." << endl;
+		cout << "Invalid ball center. Try again." << endl;
 		return;
 	}
-	
-	f = Field(origin, width, height, ball);	
+	if(!(f.checkBallDiameter(ball)))
+	{
+		cout << "Invalid ball diameter. Try again." << endl;
+		return;
+	}
+	f.ball = ball;
 }
 void Field::complexCase(Field& f)
 {
 	Point endPoints[FOUR];
 	cout << "Field points: " << endl;
-	for (int i = 0; i < FOUR; ++i)
+	for(int i = 0; i < FOUR; ++i)
 	{
 		cout << "  " << i + 1 << ") ";
 		cin >> endPoints[i];
 	}
-	
-	double width = endPoints[0].length(endPoints[1]);
-	double height = endPoints[3].length(endPoints[0]);
-	if(!Field::checkWidthHeight(width, height))
+	if(!(f.checkFieldPoints(endPoints)))
 	{
-		cout << "Invalid width and height. Try again." << endl;
+		cout << "Invalid field points. Try again." << endl;
 		return;
 	}
+	f = Field(endPoints, Ball());
 	
 	Ball ball;
 	cin >> ball;
-	if(!Field::checkBall(ball))
+	if(!(f.checkBallCenter(ball)))
 	{
-		cout << "Invalid ball. Try again." << endl;
+		cout << "Invalid ball center. Try again." << endl;
 		return;
 	}
-	
-	f = Field(endPoints, ball);
+	if(!(f.checkBallDiameter(ball)))
+	{
+		cout << "Invalid ball diameter. Try again." << endl;
+		return;
+	}
+	f.ball = ball;
 }
 
 ostream& operator<<(ostream& out, const Field& f)

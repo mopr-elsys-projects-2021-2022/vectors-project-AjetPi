@@ -1,29 +1,33 @@
 #pragma once
 #include "Ball.h"
-#include "Line.h"
-#define FOUR 4
+#define FOUR 4 // Points and walls
 
 class Field
 {
+	friend ostream& operator<<(ostream& out, const Field& f);
+	
 	private:
-		Ball ball;
-		Point startingPoint;
+		bool ratioFlag = false; // Flag whether modify function has been called or not
+		double width, height, widthRatio, heightRatio; // Left-hand side free member equation to width or height ratio
 		Point endPoints[FOUR];
-		Line sideWalls[FOUR];
-		double width, height;
-		
-		friend ostream& operator<<(ostream& out, const Field& f);
+		Line sideWalls[FOUR]; // Field wall equations
+		Ball ball;
 		
 	public:
+		Field(double, double, const Point&, const Ball&);
+		Field(Point(&)[FOUR], const Ball&);
 		Field();
-		Field(const Point&, double, double, const Ball&);
-		Field(Point(&)[4], const Ball&);
 		
+		bool checkFieldRatio(double, double); // Check whether field width to height ratio equals two or half
+		bool checkFieldPoints(Point(&)[FOUR]); // Check whether field points create a rectangle
+		bool checkBallCenter(const Ball&); // Check whether ball center lies in field
+		bool checkBallDiameter(const Ball&); // Check whether ball diameter is signed
+		bool checkPower(double); // Check whether power is between one and ten
+		
+		void modify(); // Modify all equations' left-hand side free member to take ball radius into account
 		void hit(const Point&, double);
-		static bool checkBall(const Ball& ball);
-		static bool checkWidthHeight(double, double);
-		static bool checkEndPoints(Point(&)[FOUR]);
-		static void ballCase(Field&);
-		static void simpleCase(Field&);
-		static void complexCase(Field&);
+		
+		static void ballCase(Field&); // Change ball parameters
+		static void simpleCase(Field&); // Change field parameters with width and height as a reference
+		static void complexCase(Field&); // Change field parameters with field points as a reference
 };
