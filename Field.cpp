@@ -46,13 +46,12 @@ bool Field::checkFieldPoints(Point(& endPoints)[FOUR])
 	}
 	
 	double width = endPoints[0].length(endPoints[1]);
-	double height = endPoints[1].length(endPoints[2]);
-	if((width != endPoints[2].length(endPoints[3])) || (height != endPoints[3].length(endPoints[0])))
+	if(width != endPoints[2].length(endPoints[3]))
 	{
 		return false;
 	}
 	
-	return checkFieldRatio(width, height);
+	return checkFieldRatio(width, endPoints[1].length(endPoints[2]));
 }
 bool Field::checkBallCenter(const Ball& ball)
 {
